@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "JsonComparisonTool.Web": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:52986;http://localhost:52987"
+    }
+  }
+}

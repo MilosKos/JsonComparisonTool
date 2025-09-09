@@ -1,0 +1,37 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JsonComparisonTool.Core", "src\JsonComparisonTool.Core\JsonComparisonTool.Core.csproj", "{A8B5C4D2-1F3E-4A7B-9C8D-2E1F3A4B5C6D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JsonComparisonTool.Shared", "src\JsonComparisonTool.Shared\JsonComparisonTool.Shared.csproj", "{B9C6D5E3-2F4E-5B8C-AD9E-3F2E4B5C6D7E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JsonComparisonTool.Web", "src\JsonComparisonTool.Web\JsonComparisonTool.Web.csproj", "{CAD7E6F4-3F5E-6C9D-BE0F-4F3E5C6D7E8F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{DAE8F7G5-4F6E-7D0E-CF1G-5F4E6D7E8F9G}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A8B5C4D2-1F3E-4A7B-9C8D-2E1F3A4B5C6D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A8B5C4D2-1F3E-4A7B-9C8D-2E1F3A4B5C6D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A8B5C4D2-1F3E-4A7B-9C8D-2E1F3A4B5C6D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A8B5C4D2-1F3E-4A7B-9C8D-2E1F3A4B5C6D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B9C6D5E3-2F4E-5B8C-AD9E-3F2E4B5C6D7E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B9C6D5E3-2F4E-5B8C-AD9E-3F2E4B5C6D7E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B9C6D5E3-2F4E-5B8C-AD9E-3F2E4B5C6D7E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B9C6D5E3-2F4E-5B8C-AD9E-3F2E4B5C6D7E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CAD7E6F4-3F5E-6C9D-BE0F-4F3E5C6D7E8F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CAD7E6F4-3F5E-6C9D-BE0F-4F3E5C6D7E8F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CAD7E6F4-3F5E-6C9D-BE0F-4F3E5C6D7E8F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CAD7E6F4-3F5E-6C9D-BE0F-4F3E5C6D7E8F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{A8B5C4D2-1F3E-4A7B-9C8D-2E1F3A4B5C6D} = {DAE8F7G5-4F6E-7D0E-CF1G-5F4E6D7E8F9G}
+		{B9C6D5E3-2F4E-5B8C-AD9E-3F2E4B5C6D7E} = {DAE8F7G5-4F6E-7D0E-CF1G-5F4E6D7E8F9G}
+		{CAD7E6F4-3F5E-6C9D-BE0F-4F3E5C6D7E8F} = {DAE8F7G5-4F6E-7D0E-CF1G-5F4E6D7E8F9G}
+	EndGlobalSection
+EndGlobal

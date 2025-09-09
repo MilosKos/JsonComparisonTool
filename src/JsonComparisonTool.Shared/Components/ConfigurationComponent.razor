@@ -1,0 +1,79 @@
+<div class="configuration-panel">
+    <h3 class="config-title">Comparison Configuration</h3>
+    
+    <div class="config-section">
+        <label class="config-label">
+            Comparison Fields (comma-separated, leave empty to compare all fields):
+            <input type="text" @bind="FieldsInput" @bind:event="oninput" @onblur="OnFieldsChanged" 
+                   class="config-input" placeholder="e.g., id, name, email" />
+        </label>
+        <small class="config-help">Use dot notation for nested fields (e.g., user.profile.name)</small>
+    </div>
+
+    <div class="config-section">
+        <label class="config-checkbox">
+            <input type="checkbox" @bind="Config.CaseSensitive" @onclick="OnConfigChanged" />
+            Case Sensitive Comparison
+        </label>
+    </div>
+
+    <div class="config-section">
+        <label class="config-checkbox">
+            <input type="checkbox" @bind="Config.IgnoreArrayOrder" @onclick="OnConfigChanged" />
+            Ignore Array Order
+        </label>
+    </div>
+
+    <div class="config-section">
+        <label class="config-checkbox">
+            <input type="checkbox" @bind="Config.IgnoreExtraFields" @onclick="OnConfigChanged" />
+            Ignore Extra Fields
+        </label>
+    </div>
+
+    <div class="config-section">
+        <label class="config-label">
+            Output Format:
+            <select value="@Config.OutputFormat" @onchange="OnOutputFormatChanged" class="config-select">
+                <option value="json">JSON</option>
+                <option value="csv">CSV</option>
+                <option value="html">HTML</option>
+            </select>
+        </label>
+    </div>
+</div>
+
+@code {
+    [Parameter] public ComparisonConfig Config { get; set; } = new();
+    [Parameter] public EventCallback<ComparisonConfig> ConfigChanged { get; set; }
+
+    private string FieldsInput { get; set; } = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        FieldsInput = string.Join(", ", Config.ComparisonFields);
+    }
+
+    private async Task OnFieldsChanged()
+    {
+        Config.ComparisonFields = FieldsInput
+            .Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(f => f.Trim())
+            .Where(f => !string.IsNullOrEmpty(f))
+            .ToArray();
+        
+        await OnConfigChanged();
+    }
+
+    private async Task OnConfigChanged()
+    {
+        await ConfigChanged.InvokeAsync(Config);
+    }
+
+    private async Task OnOutputFormatChanged(ChangeEventArgs e)
+    {
+        Config.OutputFormat = e.Value?.ToString() ?? "json";
+        await ConfigChanged.InvokeAsync(Config);
+    }
+}
+

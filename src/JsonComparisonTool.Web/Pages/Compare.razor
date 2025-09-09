@@ -1,0 +1,135 @@
+@page "/compare"
+
+<PageTitle>Compare JSON Files</PageTitle>
+
+<div class="compare-container">
+    <h1 class="page-title">Compare JSON Files</h1>
+    <p class="page-description">
+        Upload two JSON files and configure comparison settings to identify differences between arrays of objects.
+    </p>
+
+    <ConfigurationComponent Config="@comparisonConfig" ConfigChanged="OnConfigChanged" />
+
+    <div class="upload-section">
+        <div class="upload-grid">
+            <FileUploadComponent FileContent="@file1Content" 
+                                FileContentChanged="@((string content) => { Console.WriteLine($"File1 content changed, length: {content?.Length}"); file1Content = content; StateHasChanged(); })"
+                                FileName="@file1Name"
+                                FileNameChanged="@((string name) => { Console.WriteLine($"File1 name changed: {name}"); file1Name = name; StateHasChanged(); })"
+                                ErrorMessage="@file1Error"
+                                ErrorMessageChanged="@((string error) => { Console.WriteLine($"File1 error changed: {error}"); file1Error = error; StateHasChanged(); })"
+                                Label="First JSON File" />
+            
+            <FileUploadComponent FileContent="@file2Content" 
+                                FileContentChanged="@((string content) => { Console.WriteLine($"File2 content changed, length: {content?.Length}"); file2Content = content; StateHasChanged(); })"
+                                FileName="@file2Name"
+                                FileNameChanged="@((string name) => { Console.WriteLine($"File2 name changed: {name}"); file2Name = name; StateHasChanged(); })"
+                                ErrorMessage="@file2Error"
+                                ErrorMessageChanged="@((string error) => { Console.WriteLine($"File2 error changed: {error}"); file2Error = error; StateHasChanged(); })"
+                                Label="Second JSON File" />
+        </div>
+    </div>
+
+    <div class="action-section">
+        <button @onclick="CompareFiles" 
+                class="btn btn-primary btn-compare" 
+                disabled="@(!CanCompare || isComparing)">
+            @if (isComparing)
+            {
+                <span class="spinner"></span>
+                <span>Comparing...</span>
+            }
+            else
+            {
+                <span>Compare JSON Files</span>
+            }
+        </button>
+        
+        @if (!string.IsNullOrEmpty(generalError))
+        {
+            <div class="error-message general-error">@generalError</div>
+        }
+        
+        <!-- Debug information -->
+        <div class="debug-info" style="margin-top: 10px; padding: 10px; background: #f0f0f0; border-radius: 4px; font-size: 12px;">
+            <strong>Debug Info:</strong><br/>
+            CanCompare: @CanCompare<br/>
+            File1Content: @(!string.IsNullOrEmpty(file1Content) ? "✓ Loaded" : "✗ Empty")<br/>
+            File2Content: @(!string.IsNullOrEmpty(file2Content) ? "✓ Loaded" : "✗ Empty")<br/>
+            File1Error: @(string.IsNullOrEmpty(file1Error) ? "✓ No error" : file1Error)<br/>
+            File2Error: @(string.IsNullOrEmpty(file2Error) ? "✓ No error" : file2Error)<br/>
+            File1Name: @(file1Name ?? "Not set")<br/>
+            File2Name: @(file2Name ?? "Not set")
+        </div>
+    </div>
+
+    @if (comparisonResult != null)
+    {
+        <ResultsComponent Result="@comparisonResult" OutputFormat="@comparisonConfig.OutputFormat" />
+    }
+</div>
+
+@code {
+    private ComparisonConfig comparisonConfig = new();
+    private string? file1Content;
+    private string? file1Name;
+    private string? file1Error;
+    private string? file2Content;
+    private string? file2Name;
+    private string? file2Error;
+    private string? generalError;
+    private bool isComparing = false;
+    private ComparisonResult? comparisonResult;
+
+    private bool CanCompare => 
+        !string.IsNullOrEmpty(file1Content) && 
+        !string.IsNullOrEmpty(file2Content) && 
+        string.IsNullOrEmpty(file1Error) && 
+        string.IsNullOrEmpty(file2Error);
+
+    protected override void OnInitialized()
+    {
+        // Initialize with some reasonable defaults
+        comparisonConfig.ComparisonFields = Array.Empty<string>();
+        comparisonConfig.CaseSensitive = true;
+        comparisonConfig.OutputFormat = "json";
+    }
+
+    private void OnConfigChanged(ComparisonConfig config)
+    {
+        comparisonConfig = config;
+        StateHasChanged();
+    }
+
+    private async Task CompareFiles()
+    {
+        if (!CanCompare) return;
+
+        isComparing = true;
+        generalError = null;
+        comparisonResult = null;
+        StateHasChanged();
+
+        try
+        {
+            // Create comparator with current config
+            var comparator = new JsonComparator(comparisonConfig);
+            
+            // Perform comparison
+            comparisonResult = comparator.CompareJsonArrays(file1Content!, file2Content!);
+            
+            // Small delay for better UX
+            await Task.Delay(100);
+        }
+        catch (Exception ex)
+        {
+            generalError = $"Comparison failed: {ex.Message}";
+        }
+        finally
+        {
+            isComparing = false;
+            StateHasChanged();
+        }
+    }
+}
+

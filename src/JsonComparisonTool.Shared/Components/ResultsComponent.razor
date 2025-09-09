@@ -1,0 +1,249 @@
+@inject IJSRuntime JSRuntime
+@inject IFileService FileService
+@using System.Text
+@using System.Text.Json
+
+@if (Result != null)
+{
+    <div class="results-container">
+        <div class="results-header">
+            <h3>Comparison Results</h3>
+            <div class="results-actions">
+                <button @onclick="DownloadResults" class="btn btn-download" disabled="@IsDownloading">
+                    @if (IsDownloading)
+                    {
+                        <span>Downloading...</span>
+                    }
+                    else
+                    {
+                        <span>Download Results</span>
+                    }
+                </button>
+            </div>
+        </div>
+
+        <div class="summary-section">
+            <h4>Summary</h4>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <span class="summary-label">Total in First File:</span>
+                    <span class="summary-value">@Result.Summary.TotalObjectsInFirst</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Total in Second File:</span>
+                    <span class="summary-value">@Result.Summary.TotalObjectsInSecond</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Matching Objects:</span>
+                    <span class="summary-value success">@Result.Summary.MatchingObjects</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Objects with Differences:</span>
+                    <span class="summary-value warning">@Result.Summary.ObjectsWithDifferences</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Only in First:</span>
+                    <span class="summary-value error">@Result.Summary.OnlyInFirstCount</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Only in Second:</span>
+                    <span class="summary-value error">@Result.Summary.OnlyInSecondCount</span>
+                </div>
+            </div>
+        </div>
+
+        @if (Result.OnlyInFirst.Count > 0)
+        {
+            <div class="section">
+                <h4 class="section-title error">Objects Only in First File (@Result.OnlyInFirst.Count)</h4>
+                <div class="objects-container">
+                    @foreach (var obj in Result.OnlyInFirst)
+                    {
+                        <div class="object-card only-in-first">
+                            <pre class="json-content">@FormatJson(obj)</pre>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        @if (Result.OnlyInSecond.Count > 0)
+        {
+            <div class="section">
+                <h4 class="section-title error">Objects Only in Second File (@Result.OnlyInSecond.Count)</h4>
+                <div class="objects-container">
+                    @foreach (var obj in Result.OnlyInSecond)
+                    {
+                        <div class="object-card only-in-second">
+                            <pre class="json-content">@FormatJson(obj)</pre>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        @if (Result.Differences.Count > 0)
+        {
+            <div class="section">
+                <h4 class="section-title warning">Objects with Differences (@Result.Differences.Count)</h4>
+                @foreach (var diff in Result.Differences)
+                {
+                    <div class="difference-card">
+                        <div class="difference-header">
+                            <h5>Field Differences:</h5>
+                            <div class="field-differences">
+                                @foreach (var fieldDiff in diff.FieldDifferences)
+                                {
+                                    <div class="field-diff">
+                                        <strong>@fieldDiff.FieldPath:</strong>
+                                        <span class="diff-values">
+                                            "<span class="value-first">@fieldDiff.ValueInFirst</span>" → 
+                                            "<span class="value-second">@fieldDiff.ValueInSecond</span>"
+                                        </span>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        <div class="objects-comparison">
+                            <div class="object-side">
+                                <h6>First File Object:</h6>
+                                <pre class="json-content">@FormatJson(diff.ObjectFromFirst)</pre>
+                            </div>
+                            <div class="object-side">
+                                <h6>Second File Object:</h6>
+                                <pre class="json-content">@FormatJson(diff.ObjectFromSecond)</pre>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public ComparisonResult? Result { get; set; }
+    [Parameter] public string OutputFormat { get; set; } = "json";
+
+    private bool IsDownloading = false;
+
+    private string FormatJson(System.Text.Json.JsonElement element)
+    {
+        var options = new JsonSerializerOptions
+        {
+            WriteIndented = true
+        };
+        return JsonSerializer.Serialize(element, options);
+    }
+
+    private async Task DownloadResults()
+    {
+        if (Result == null) return;
+
+        IsDownloading = true;
+        try
+        {
+            var content = OutputFormat.ToLower() switch
+            {
+                "csv" => GenerateCsvContent(),
+                "html" => GenerateHtmlContent(),
+                _ => GenerateJsonContent()
+            };
+
+            var fileName = $"comparison_results_{DateTime.Now:yyyyMMdd_HHmmss}.{OutputFormat.ToLower()}";
+            var fileBytes = await FileService.CreateDownloadFileAsync(content, fileName);
+            
+            await JSRuntime.InvokeVoidAsync("downloadFile", fileName, Convert.ToBase64String(fileBytes), FileService.GetContentType(fileName));
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error downloading file: {ex.Message}");
+        }
+        finally
+        {
+            IsDownloading = false;
+        }
+    }
+
+    private string GenerateJsonContent()
+    {
+        var options = new JsonSerializerOptions { WriteIndented = true };
+        return JsonSerializer.Serialize(Result, options);
+    }
+
+    private string GenerateCsvContent()
+    {
+        var csv = new StringBuilder();
+        csv.AppendLine("Type,Object,FieldPath,ValueInFirst,ValueInSecond");
+
+        foreach (var obj in Result!.OnlyInFirst)
+        {
+            csv.AppendLine($"OnlyInFirst,\"{EscapeCsv(FormatJson(obj))}\",,,");
+        }
+
+        foreach (var obj in Result.OnlyInSecond)
+        {
+            csv.AppendLine($"OnlyInSecond,\"{EscapeCsv(FormatJson(obj))}\",,,");
+        }
+
+        foreach (var diff in Result.Differences)
+        {
+            foreach (var fieldDiff in diff.FieldDifferences)
+            {
+                csv.AppendLine($"Difference,\"{EscapeCsv(FormatJson(diff.ObjectFromFirst))}\",\"{EscapeCsv(fieldDiff.FieldPath)}\",\"{EscapeCsv(fieldDiff.ValueInFirst)}\",\"{EscapeCsv(fieldDiff.ValueInSecond)}\"");
+            }
+        }
+
+        return csv.ToString();
+    }
+
+    private string GenerateHtmlContent()
+    {
+        var html = new StringBuilder();
+        html.AppendLine("<!DOCTYPE html>");
+        html.AppendLine("<html><head><title>JSON Comparison Results</title>");
+        html.AppendLine("<style>body{font-family:Arial,sans-serif;margin:20px;}table{border-collapse:collapse;width:100%;}th,td{border:1px solid #ddd;padding:8px;text-align:left;}th{background-color:#f2f2f2;}pre{background:#f8f8f8;padding:10px;border-radius:4px;}</style>");
+        html.AppendLine("</head><body>");
+        html.AppendLine($"<h1>JSON Comparison Results</h1>");
+        html.AppendLine($"<p>Generated on: {Result!.ComparisonTimestamp:yyyy-MM-dd HH:mm:ss} UTC</p>");
+        
+        // Summary table
+        html.AppendLine("<h2>Summary</h2>");
+        html.AppendLine("<table><tr><th>Metric</th><th>Count</th></tr>");
+        html.AppendLine($"<tr><td>Total in First File</td><td>{Result.Summary.TotalObjectsInFirst}</td></tr>");
+        html.AppendLine($"<tr><td>Total in Second File</td><td>{Result.Summary.TotalObjectsInSecond}</td></tr>");
+        html.AppendLine($"<tr><td>Matching Objects</td><td>{Result.Summary.MatchingObjects}</td></tr>");
+        html.AppendLine($"<tr><td>Objects with Differences</td><td>{Result.Summary.ObjectsWithDifferences}</td></tr>");
+        html.AppendLine($"<tr><td>Only in First</td><td>{Result.Summary.OnlyInFirstCount}</td></tr>");
+        html.AppendLine($"<tr><td>Only in Second</td><td>{Result.Summary.OnlyInSecondCount}</td></tr>");
+        html.AppendLine("</table>");
+
+        if (Result.OnlyInFirst.Count > 0)
+        {
+            html.AppendLine("<h2>Objects Only in First File</h2>");
+            foreach (var obj in Result.OnlyInFirst)
+            {
+                html.AppendLine($"<pre>{System.Web.HttpUtility.HtmlEncode(FormatJson(obj))}</pre>");
+            }
+        }
+
+        if (Result.OnlyInSecond.Count > 0)
+        {
+            html.AppendLine("<h2>Objects Only in Second File</h2>");
+            foreach (var obj in Result.OnlyInSecond)
+            {
+                html.AppendLine($"<pre>{System.Web.HttpUtility.HtmlEncode(FormatJson(obj))}</pre>");
+            }
+        }
+
+        html.AppendLine("</body></html>");
+        return html.ToString();
+    }
+
+    private string EscapeCsv(string? value)
+    {
+        if (value == null) return "";
+        return value.Replace("\"", "\"\"");
+    }
+}
+

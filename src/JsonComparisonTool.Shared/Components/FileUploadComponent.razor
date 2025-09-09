@@ -1,0 +1,121 @@
+@inject IFileService FileService
+
+<div class="file-upload-container">
+    <div class="file-upload-section">
+        <label class="file-upload-label">
+            <span class="file-label-text">@Label</span>
+            <InputFile OnChange="OnFileSelected" accept=".json" class="file-input" />
+            <div class="file-upload-display">
+                @if (string.IsNullOrEmpty(FileName))
+                {
+                    <span class="upload-placeholder">Choose JSON file...</span>
+                }
+                else
+                {
+                    <span class="upload-filename">@FileName</span>
+                }
+            </div>
+        </label>
+    </div>
+    
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="error-message">@ErrorMessage</div>
+    }
+    
+    <!-- Debug information -->
+    <div style="font-size: 10px; color: #666; margin-top: 5px;">
+        FileContent Length: @(FileContent?.Length ?? 0) | FileName: @(FileName ?? "null")
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Label { get; set; } = "Select File";
+    [Parameter] public string? FileContent { get; set; }
+    [Parameter] public string? FileName { get; set; }
+    [Parameter] public EventCallback<string> FileContentChanged { get; set; }
+    [Parameter] public EventCallback<string> FileNameChanged { get; set; }
+    [Parameter] public string? ErrorMessage { get; set; }
+    [Parameter] public EventCallback<string?> ErrorMessageChanged { get; set; }
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        Console.WriteLine($"OnFileSelected called for {Label}");
+        ErrorMessage = null;
+        await ErrorMessageChanged.InvokeAsync(ErrorMessage);
+
+        try
+        {
+            var file = e.File;
+            
+            Console.WriteLine($"File selected: {file?.Name}, Size: {file?.Size}");
+            
+            if (file == null)
+            {
+                Console.WriteLine("File is null, returning");
+                return;
+            }
+
+            // Validate file type
+            if (!file.Name.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+            {
+                Console.WriteLine($"Invalid file type: {file.Name}");
+                ErrorMessage = "Please select a JSON file (.json)";
+                await ErrorMessageChanged.InvokeAsync(ErrorMessage);
+                return;
+            }
+
+            // Validate file size (10MB limit)
+            const long maxFileSize = 10 * 1024 * 1024;
+            if (file.Size > maxFileSize)
+            {
+                Console.WriteLine($"File too large: {file.Size} bytes");
+                ErrorMessage = "File size must be less than 10MB";
+                await ErrorMessageChanged.InvokeAsync(ErrorMessage);
+                return;
+            }
+
+            Console.WriteLine($"Opening stream for file: {file.Name}");
+            // Read file content
+            using var stream = file.OpenReadStream(maxFileSize);
+            Console.WriteLine($"Stream opened, calling FileService.ReadFileAsTextAsync");
+            var content = await FileService.ReadFileAsTextAsync(stream, file.Name);
+            Console.WriteLine($"Content read, length: {content?.Length ?? 0}");
+
+            // Validate JSON format
+            try
+            {
+                System.Text.Json.JsonDocument.Parse(content);
+            }
+            catch (System.Text.Json.JsonException)
+            {
+                ErrorMessage = "Invalid JSON format";
+                await ErrorMessageChanged.InvokeAsync(ErrorMessage);
+                return;
+            }
+
+            // Update properties
+            FileName = file.Name;
+            FileContent = content;
+            
+            Console.WriteLine($"File processed: {FileName}, Content length: {content?.Length}");
+            Console.WriteLine($"About to invoke events - FileName: {FileName}, content length: {content?.Length}");
+            
+            await FileNameChanged.InvokeAsync(FileName ?? "");
+            Console.WriteLine($"FileNameChanged event invoked");
+            
+            // Ensure content is not null before invoking
+            var contentToPass = content ?? "";
+            await FileContentChanged.InvokeAsync(contentToPass);
+            Console.WriteLine($"FileContentChanged event invoked with content length: {contentToPass.Length}");
+            
+            Console.WriteLine($"All events invoked for {Label}");
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Error reading file: {ex.Message}";
+            await ErrorMessageChanged.InvokeAsync(ErrorMessage);
+        }
+    }
+}
+

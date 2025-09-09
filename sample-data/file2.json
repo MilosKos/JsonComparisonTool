@@ -1,0 +1,29 @@
+[
+  {
+    "id": 1,
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "profile": {
+      "age": 31,
+      "city": "New York"
+    }
+  },
+  {
+    "id": 2,
+    "name": "Jane Smith",
+    "email": "jane@example.com",
+    "profile": {
+      "age": 25,
+      "city": "Los Angeles"
+    }
+  },
+  {
+    "id": 4,
+    "name": "Alice Wilson",
+    "email": "alice@example.com",
+    "profile": {
+      "age": 28,
+      "city": "Seattle"
+    }
+  }
+]

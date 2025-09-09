@@ -1,0 +1,13 @@
+{
+  "name": "JSON Comparison Tool",
+  "short_name": "JSONCompare",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "prefer_related_applications": false,
+  "icons": [],
+  "categories": ["productivity", "utilities", "developer"],
+  "description": "Compare two JSON files containing arrays of objects based on configurable fields. Identify differences, missing objects, and generate detailed reports.",
+  "screenshots": []
+}
