@@ -95,6 +95,40 @@ a:hover, .btn-link:hover {
     color: #374151;
 }
 
+/* Install button styles */
+.install-btn {
+    background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+    margin-right: 1rem;
+}
+
+.install-btn:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+.install-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+}
+
+.install-icon {
+    font-size: 1rem;
+    line-height: 1;
+}
+
 main {
     flex: 1;
     margin-left: 260px;
@@ -222,6 +256,17 @@ main {
         position: sticky;
         top: 0;
         z-index: 999;
+        justify-content: space-between;
+    }
+
+    .install-btn {
+        margin-right: 0.5rem;
+        padding: 0.375rem 0.75rem;
+        font-size: 0.8rem;
+    }
+
+    .install-icon {
+        font-size: 0.875rem;
     }
 
     .nav-scrollable {
